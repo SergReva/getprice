@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Оцінка ПММ за Методикою №759</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Application Structure Plan:
+    1. Interactive inputs for Time Factors (T_norm, T_fact) computing K.
+    2. Dynamic Table for Quality Indicators allowing decimals (0.435, etc).
+    3. Valuation Engine: Computes Price * K_ckz with local storage for persistence.
+    4. Mobile-optimized UI with Tailwind CSS.
+    -->
+
+    <style>
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+        .custom-focus:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+            border-color: #10b981;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen p-3 md:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <header class="mb-8 text-center">
+            <h1 class="text-2xl md:text-4xl font-black text-slate-900 mb-2">Калькулятор оцінки некондиційних ПММ</h1>
+            <p class="text-slate-500 text-sm md:text-base">Автоматизований розрахунок за Методикою №759</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- ЛІВА КОЛОНКА: ДАНІ ТА ПОКАЗНИКИ -->
+            <div class="lg:col-span-7 space-y-6">
+                
+                <!-- Коефіцієнт часу -->
+                <section class="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-lg font-bold mb-4 flex items-center text-slate-800 border-b pb-2">
+                        <span class="mr-2 text-emerald-500">⏳</span> 1. Коефіцієнт часу (К)
+                    </h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Нормативний час:</label>
+                            <input type="number" id="t-norm" step="any" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl custom-focus transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Фактичний час:</label>
+                            <input type="number" id="t-fact" step="any" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl custom-focus transition-all">
+                        </div>
+                    </div>
+                    <div class="mt-4 p-3 bg-slate-100 rounded-xl flex justify-between items-center">
+                        <span class="text-xs font-medium text-slate-500">Результат К:</span>
+                        <span id="display-k" class="text-lg font-mono font-bold text-slate-900">0.200</span>
+                    </div>
+                </section>
+
+                <!-- Таблиця показників -->
+                <section class="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center mb-4 border-b pb-2">
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center">
+                            <span class="mr-2 text-emerald-500">🧪</span> 2. Показники якості
+                        </h2>
+                        <button onclick="addRow()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] px-3 py-1.5 rounded-lg font-bold uppercase transition-colors">
+                            + Додати
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto -mx-5 px-5">
+                        <table class="w-full text-left min-w-[400px]">
+                            <thead>
+                                <tr class="text-slate-400 text-[10px] uppercase tracking-widest border-b">
+                                    <th class="pb-3">Назва</th>
+                                    <th class="pb-3 text-center">Норма (ДСТУ)</th>
+                                    <th class="pb-3 text-center">Факт (Паспорт)</th>
+                                    <th class="pb-3 w-8"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="indicators-body">
+                                <!-- Рядки додаються динамічно -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-4 flex gap-4 text-[10px] text-slate-400 uppercase font-bold">
+                        <div class="bg-slate-50 px-2 py-1 rounded">n: <span id="display-n" class="text-slate-900">0</span></div>
+                        <div class="bg-slate-50 px-2 py-1 rounded">Kуд: <span id="display-kud" class="text-slate-900">0.0000</span></div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ПРАВА КОЛОНКА: ФІНАНСИ -->
+            <div class="lg:col-span-5 space-y-6">
+                
+                <!-- Результат Kckz -->
+                <section class="bg-slate-900 text-white p-6 rounded-3xl shadow-xl">
+                    <p class="text-slate-400 text-[10px] uppercase tracking-[0.2em] font-bold mb-1">Коефіцієнт зносу (Кскз)</p>
+                    <div id="final-result-k" class="text-5xl font-black text-emerald-400 mb-2">0.2000</div>
+                    <div class="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
+                        <div id="k-progress" class="h-full bg-emerald-500 transition-all duration-500" style="width: 20%"></div>
+                    </div>
+                </section>
+
+                <!-- Розрахунок вартості -->
+                <section class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-emerald-100">
+                    <h2 class="text-lg font-bold text-slate-800 mb-6 flex items-center">
+                        <span class="mr-2">💰</span> Розрахунок ціни
+                    </h2>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Ринкова ціна кондиційного ПММ (₴):</label>
+                            <input type="number" id="base-price" step="any" 
+                                   class="w-full p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-2xl font-bold text-emerald-900 focus:ring-2 focus:ring-emerald-500 outline-none transition-all">
+                        </div>
+
+                        <div class="pt-6 border-t border-slate-100">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Залишкова вартість:</p>
+                            <div class="flex items-baseline gap-2">
+                                <span id="final-valuation" class="text-4xl md:text-5xl font-black text-slate-900">0.00</span>
+                                <span class="text-lg font-bold text-slate-400">грн</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Інструкція -->
+                <div class="p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                    <h4 class="text-blue-800 font-bold text-xs mb-1">Довідка:</h4>
+                    <p class="text-[10px] text-blue-600 leading-tight">
+                        ⚠ Дана модель працює для вирахування ціни на оливу а не на Залишкову вартість мазути.</br>Для дробових чисел (наприклад, 0.435) використовуйте крапку. Дані автоматично зберігаються у вашому браузері.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Ініціалізація даних (з пам'яті або стандартні)
+        let state = JSON.parse(localStorage.getItem('pmm_state')) || {
+            tNorm: 60,
+            tFact: 30,
+            basePrice: 50,
+            indicators: [
+                { id: 1, name: "Октанове число", norm: 95, fact: 92 },
+                { id: 2, name: "Механічні домішки", norm: 0.05, fact: 0.12 }
+            ]
+        };
+
+        function saveState() {
+            localStorage.setItem('pmm_state', JSON.stringify(state));
+        }
+
+        function calculateK() {
+            const tNorm = state.tNorm || 1;
+            const tFact = state.tFact || 0;
+            let k = (tNorm - tFact) / tNorm;
+            if (k < 0.2) k = 0.2;
+            document.getElementById('display-k').innerText = k.toFixed(3);
+            return k;
+        }
+
+        function addRow() {
+            state.indicators.push({ id: Date.now(), name: "", norm: 1.0, fact: 1.0 });
+            renderTable();
+            updateCalculations();
+        }
+
+        function removeRow(id) {
+            if (state.indicators.length <= 1) return;
+            state.indicators = state.indicators.filter(i => i.id !== id);
+            renderTable();
+            updateCalculations();
+        }
+
+        function updateIndicator(id, field, value) {
+            const idx = state.indicators.findIndex(i => i.id === id);
+            if (idx !== -1) {
+                const val = field === 'name' ? value : parseFloat(value.replace(',', '.')) || 0;
+                state.indicators[idx][field] = val;
+                updateCalculations();
+            }
+        }
+
+        function renderTable() {
+            const body = document.getElementById('indicators-body');
+            body.innerHTML = '';
+            state.indicators.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b border-slate-50 group transition-colors hover:bg-slate-50/50';
+                tr.innerHTML = `
+                    <td class="py-3 pr-2">
+                        <input type="text" value="${item.name}" placeholder="..." 
+                               oninput="updateIndicator(${item.id}, 'name', this.value)"
+                               class="w-full bg-transparent border-none focus:ring-0 font-medium text-slate-700 text-sm">
+                    </td>
+                    <td class="py-3 text-center">
+                        <input type="number" value="${item.norm}" step="any"
+                               oninput="updateIndicator(${item.id}, 'norm', this.value)"
+                               class="w-20 md:w-24 bg-white border border-slate-100 rounded-lg px-2 py-1 text-center text-sm outline-none">
+                    </td>
+                    <td class="py-3 text-center">
+                        <input type="number" value="${item.fact}" step="any"
+                               oninput="updateIndicator(${item.id}, 'fact', this.value)"
+                               class="w-20 md:w-24 bg-white border border-slate-100 rounded-lg px-2 py-1 text-center text-sm outline-none font-semibold">
+                    </td>
+                    <td class="py-3 text-right">
+                        <button onclick="removeRow(${item.id})" class="text-slate-300 hover:text-red-400 p-1">✕</button>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+
+        function updateCalculations() {
+            const kTime = calculateK();
+            const n = state.indicators.length;
+            const kud = n > 0 ? (1 / n) : 0;
+
+            document.getElementById('display-n').innerText = n;
+            document.getElementById('display-kud').innerText = kud.toFixed(4);
+
+            let sumKudKfs = 0;
+            state.indicators.forEach(item => {
+                let kfs = item.norm !== 0 ? (item.fact / item.norm) : 0;
+                if (kfs > 1) kfs = 1;
+                sumKudKfs += (kud * kfs);
+            });
+
+            const kCkz = kTime * sumKudKfs;
+            document.getElementById('final-result-k').innerText = kCkz.toFixed(3);
+            document.getElementById('k-progress').style.width = (kCkz * 100) + '%';
+
+            const valuation = state.basePrice / kCkz;
+            document.getElementById('final-valuation').innerText = valuation.toLocaleString('uk-UA', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 4
+            });
+            saveState();
+        }
+
+        // Прив'язка основних полів
+        document.getElementById('t-norm').addEventListener('input', e => { state.tNorm = parseFloat(e.target.value) || 0; updateCalculations(); });
+        document.getElementById('t-fact').addEventListener('input', e => { state.tFact = parseFloat(e.target.value) || 0; updateCalculations(); });
+        document.getElementById('base-price').addEventListener('input', e => { state.basePrice = parseFloat(e.target.value) || 0; updateCalculations(); });
+
+        window.onload = () => {
+            // Встановлення початкових значень в інпути
+            document.getElementById('t-norm').value = state.tNorm;
+            document.getElementById('t-fact').value = state.tFact;
+            document.getElementById('base-price').value = state.basePrice;
+            renderTable();
+            updateCalculations();
+        };
+    </script>
+</body>
+</html>
