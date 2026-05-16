@@ -237,10 +237,11 @@
                 if (kfs > 1) kfs = 1;
                 kfs.toFixed(3);
                 sumKudKfs += (kud * kfs);
+                console.log(sumKudKfs);
             });
 
             const kCkz = kTime * sumKudKfs;
-            document.getElementById('final-result-k').innerText = kCkz.toFixed(3);
+            document.getElementById('final-result-k').innerText = kCkz.toFixed(2);
             document.getElementById('k-progress').style.width = (kCkz * 100) + '%';
 
             const valuation = state.basePrice / kCkz;
