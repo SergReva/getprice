@@ -236,6 +236,7 @@
                 let kfs = item.norm !== 0 ? (item.fact / item.norm) : 0;
                 if (kfs > 1) kfs = 1;
                 kfs.toFixed(3);
+                kud.toFixed(2);
                 sumKudKfs += (kud * kfs);
                 console.log(sumKudKfs);
             });
@@ -244,7 +245,7 @@
             document.getElementById('final-result-k').innerText = kCkz.toFixed(2);
             document.getElementById('k-progress').style.width = (kCkz * 100) + '%';
 
-            const valuation = state.basePrice / kCkz;
+            const valuation = state.basePrice / kCkz.toFix(2);
             document.getElementById('final-valuation').innerText = valuation.toLocaleString('uk-UA', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 4
