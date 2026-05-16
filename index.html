@@ -226,17 +226,16 @@
         function updateCalculations() {
             const kTime = calculateK();
             const n = state.indicators.length;
-            const kud = n > 0 ? (1 / n) : 0;
+            const kud = n > 0 ? (1 / n.toFixed(2)) : 0;
 
             document.getElementById('display-n').innerText = n;
-            document.getElementById('display-kud').innerText = kud.toFixed(2);
+            document.getElementById('display-kud').innerText = kud;
 
             let sumKudKfs = 0;
             state.indicators.forEach(item => {
                 let kfs = item.norm !== 0 ? (item.fact / item.norm) : 0;
                 if (kfs > 1) kfs = 1;
                 kfs = kfs.toFixed(3);
-                kud = kud.toFixed(2);
                 sumKudKfs += (kud * kfs);
                 console.log(sumKudKfs);
             });
