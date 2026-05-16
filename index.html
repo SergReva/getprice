@@ -234,7 +234,7 @@
             let sumKudKfs = 0;
             state.indicators.forEach(item => {
                 let kfs = item.norm !== 0 ? (item.fact / item.norm) : 0;
-                if (kfs > 0.8) kfs = 1;
+                if (kfs > 1) kfs = 1;
                 sumKudKfs += (kud * kfs);
             });
 
