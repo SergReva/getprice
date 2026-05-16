@@ -138,7 +138,7 @@
                 <div class="p-4 bg-blue-50 rounded-2xl border border-blue-100">
                     <h4 class="text-blue-800 font-bold text-xs mb-1">Довідка:</h4>
                     <p class="text-[10px] text-blue-600 leading-tight">
-                        ⚠ Дана модель працює для вирахування ціни на оливу а не на Залишкову вартість мазути.</br>Для дробових чисел (наприклад, 0.435) використовуйте крапку. Дані автоматично зберігаються у вашому браузері.
+                        ⚠️ Дана модель працює для вирахування ціни на оливу а не на Залишкову вартість мазути.</br>Для дробових чисел (наприклад, 0.435) використовуйте крапку. Дані автоматично зберігаються у вашому браузері.
                     </p>
                 </div>
             </div>
@@ -167,7 +167,7 @@
             const tFact = state.tFact || 0;
             let k = (tNorm - tFact) / tNorm;
             if (k < 0.2) k = 0.2;
-            document.getElementById('display-k').innerText = k.toFixed(3);
+            document.getElementById('display-k').innerText = k.toFixed(2);
             return k;
         }
 
@@ -229,7 +229,7 @@
             const kud = n > 0 ? (1 / n) : 0;
 
             document.getElementById('display-n').innerText = n;
-            document.getElementById('display-kud').innerText = kud.toFixed(4);
+            document.getElementById('display-kud').innerText = kud.toFixed(2);
 
             let sumKudKfs = 0;
             state.indicators.forEach(item => {
