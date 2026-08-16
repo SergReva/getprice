@@ -152,6 +152,7 @@
             tNorm: 5,
             tFact: 1,
             basePrice: 27.124,
+            counter: 2,
             indicators: [
                 { id: 1, name: "Октанове число", norm: 95, fact: 92 },
                 { id: 2, name: "Механічні домішки", norm: 0.05, fact: 0.12 }
@@ -172,7 +173,8 @@
         }
 
         function addRow() {
-            state.indicators.push({ id: Date.now(), name: "", norm: 1.0, fact: 1.0 });
+            state.counter++;
+            state.indicators.push({ id: Date.now(), name: "Показник " + state.counter, norm: 1.0, fact: 1.0 });
             renderTable();
             updateCalculations();
         }
@@ -180,6 +182,7 @@
         function removeRow(id) {
             if (state.indicators.length <= 1) return;
             state.indicators = state.indicators.filter(i => i.id !== id);
+            state.counter--;
             renderTable();
             updateCalculations();
         }
